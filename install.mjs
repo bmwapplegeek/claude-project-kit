@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { preCommitBlock, upsertBlock, removeBlock, hookTarget, installGitleaks, BLOCK_START } from './lib/githooks/wiring.mjs';
+import { kitCommands, userConfig } from './lib/kit-env.mjs';
 
 const KIT = path.dirname(fileURLToPath(import.meta.url));
 const HOOK_CMD = '.claude/kit/lib/hooks/run.sh';
@@ -173,10 +174,15 @@ function claudeMdPath(root) {
   return 'CLAUDE.md';
 }
 
-function claudeMdBody(layers) {
+/** The CLAUDE.md block for these layers. {{jobStart}}, {{jobFinish}} and {{predeployCheck}} name the kit's
+ *  commands, or the repo's own ones from .claude/project-kit.json (see kitCommands in lib/kit-env.mjs). */
+export function claudeMdBody(layers, root) {
   const reg = registry();
+  const cmd = kitCommands(userConfig(root));
   return layers.map((l) => reg.layers[l].claudeMd).filter(Boolean)
-    .map((t) => fs.readFileSync(path.join(KIT, t), 'utf8').trimEnd()).join('\n');
+    .map((t) => fs.readFileSync(path.join(KIT, t), 'utf8').trimEnd())
+    .join('\n')
+    .replace(/\{\{(jobStart|jobFinish|predeployCheck)\}\}/g, (_, k) => cmd[k]);
 }
 
 // ---------------------------------------------------------------- install / uninstall
@@ -267,7 +273,7 @@ export function install(opts) {
   // 4. CLAUDE.md block
   const mdRel = claudeMdPath(root);
   const mdOld = readText(path.join(root, mdRel));
-  const mdNew = upsertMarked(mdOld || '', MD_START, MD_END, claudeMdBody(layers));
+  const mdNew = upsertMarked(mdOld || '', MD_START, MD_END, claudeMdBody(layers, root));
   if (mdNew !== mdOld) { if (mdOld === null) created.add(mdRel); w.write(mdRel, mdNew); report.merged.push(`${mdRel} (project-kit block)`); }
 
   // 5. .gitignore block

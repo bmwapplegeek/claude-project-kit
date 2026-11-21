@@ -25,7 +25,7 @@ Tell the repo's agent: **"Install the project kit from https://github.com/bmwapp
 [INSTALL.md](INSTALL.md) is the step-by-step an agent follows. By hand:
 
 ```bash
-git clone --depth 1 --branch v1.0.1 https://github.com/bmwapplegeek/claude-project-kit.git /tmp/project-kit
+git clone --depth 1 --branch v1.1.1 https://github.com/bmwapplegeek/claude-project-kit.git /tmp/project-kit
 node /tmp/project-kit/install.mjs --target /path/to/repo --preset basic      # or --preset phoenix, or --with core,jobs,ci-node
 ```
 
@@ -43,11 +43,11 @@ Options: `--dry-run`, `--no-download` (skip fetching the scanner), `--force`, `-
 ### Install the plugin (once per machine)
 
 ```bash
-claude plugin marketplace add bmwapplegeek/claude-project-kit@v1.0.1
+claude plugin marketplace add bmwapplegeek/claude-project-kit@v1.1.1
 claude plugin install guardrails@project-kit
 ```
 
-or in a session: `/plugin marketplace add bmwapplegeek/claude-project-kit@v1.0.1`, then
+or in a session: `/plugin marketplace add bmwapplegeek/claude-project-kit@v1.1.1`, then
 `/plugin install guardrails@project-kit`. The terminal, the desktop app and the VS Code and JetBrains extensions
 read the same `~/.claude` settings, so one install covers all of them on that machine. Leave the marketplace's
 auto-update off (the default for third-party marketplaces): updates are meant to be read before they are taken.
@@ -113,6 +113,22 @@ To silence the plugin's "kit not installed here" note for one repo: the command 
 }
 ```
 
+**A repo that wraps a kit tool in its own script** (a job starter that also links dependencies, a pre-deploy check
+that also probes its server) names it here, and the kit points agents at it instead of its own:
+
+```json
+{
+  "jobs": { "startCommand": "scripts/job-start", "finishCommand": "scripts/job-finish" },
+  "predeploy": { "checkCommand": "node scripts/predeploy-check.mjs" }
+}
+```
+
+The hook messages, the session STOP note, the pre-commit message and the CLAUDE.md block (re-run the installer
+after changing these) then name those commands. The kit's own `job.mjs start|finish` and `predeploy-check.mjs`
+refuse to run in such a repo, so a weaker generic step cannot stand in for the repo's. The repo's pre-deploy
+script must write the stamp the deploy rule reads: import `stampPath` from `.claude/kit/lib/phoenix/predeploy-lib.mjs`.
+The commands are only shown, never executed by the kit.
+
 ## State and logs
 
 Throttles, stamps and error logs live in `.claude/kit/state/` in a repo install (gitignored) and in
@@ -122,6 +138,9 @@ Throttles, stamps and error logs live in `.claude/kit/state/` in a repo install 
 
 - **A rule:** drop `lib/bash-guard/rules/<layer>/<name>.mjs` exporting `name` and `check({command, commands, cwd})`
   (return a message to block). No registration.
+- **A rule for one repo only:** drop it in that repo's `.claude/guard-rules/<name>.mjs` (same shape). In a repo
+  install these run after the layers' rules, fail open like them, and are never written or removed by the
+  installer. Import the kit's helpers relatively (`../kit/lib/bash-guard/shell.mjs`, `../kit/lib/bash-guard/repo-state.mjs`).
 - **A CI stack:** add `addons/ci/<stack>/ci.yml` and a `ci-<stack>` entry in `layers.json` with a `detect` file.
 - **A layer:** an entry in `layers.json` (its `lib` paths, `files`, and a `templates/claude-md/<layer>.md` section).
 

@@ -10,10 +10,11 @@ ROOT="$(git rev-parse --show-toplevel)"
 BASE="$(node -e 'try{const c=require(process.argv[1]);process.stdout.write((c.jobs&&c.jobs.baseBranch)||"main")}catch{process.stdout.write("main")}' "$ROOT/.claude/project-kit.json" 2>/dev/null || echo main)"
 BR="$(git symbolic-ref --quiet --short HEAD || echo '(detached)')"
 if [ "$BR" != "$BASE" ]; then
+  START="$(node -e 'let s;try{s=require(process.argv[1]).jobs.startCommand}catch{}process.stdout.write(typeof s==="string"&&s.trim()&&!/[\n\r`]/.test(s)&&s.length<=200?s.trim():"node .claude/kit/lib/jobs/job.mjs start")' "$ROOT/.claude/project-kit.json" 2>/dev/null || echo 'node .claude/kit/lib/jobs/job.mjs start')"
   cat >&2 <<EOF
 
 BLOCKED (project-kit jobs): this is the main checkout and it is on '$BR', not '$BASE'. Do your work in your own
-worktree: node .claude/kit/lib/jobs/job.mjs start <type>/<slug>. If '$BR' is another session's branch, leave it
+worktree: $START <type>/<slug>. If '$BR' is another session's branch, leave it
 and tell the owner. Owner-approved exception: JOB_ALLOW_MAIN_DIR=1 git commit ...
 EOF
   exit 1
