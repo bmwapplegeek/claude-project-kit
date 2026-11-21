@@ -1,0 +1,12 @@
+{
+  "name": "project-kit",
+  "owner": { "name": "project-kit authors" },
+  "description": "The project kit: Claude Code guardrails (hooks, pinned review skills, update reminders). The plugin covers every repo on a machine; the installer in the same repository writes the guardrails into one repo.",
+  "plugins": [
+    {
+      "name": "guardrails",
+      "source": "./",
+      "description": "Guardrail hooks and pinned review skills for every repo opened on this machine."
+    }
+  ]
+}

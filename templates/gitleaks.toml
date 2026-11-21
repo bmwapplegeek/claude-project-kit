@@ -1,0 +1,22 @@
+# gitleaks config, created by the project kit. Extends the default ruleset.
+# Allowlist entries must stay NARROW: a rule plus a path or line pattern, never a whole rule class.
+# Write a one-line reason in each entry's description. The kit never overwrites this file.
+title = "project gitleaks"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "this config file names rules and example patterns"
+paths = ['''^\.gitleaks\.toml$''']
+
+[[allowlists]]
+description = "generic-api-key: the project kit's manifests map file paths to sha256 hashes, not secrets"
+targetRules = ["generic-api-key"]
+paths = ['''^\.claude/kit/installed\.json$''', '''^\.claude/skills/review-skills\.lock\.json$''']
+
+# Example of a narrow entry (delete or adapt):
+# [[allowlists]]
+# description = "generic-api-key: public row ids in a test fixture"
+# targetRules = ["generic-api-key"]
+# paths = ['''^test/fixtures/rows\.json$''']

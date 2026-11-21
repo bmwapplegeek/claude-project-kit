@@ -1,0 +1,95 @@
+# Installed by the project kit (layer ci-node). Edit freely: once installed this file is the repo's own,
+# and the kit installer will not overwrite a changed copy.
+#
+# Runs on every pull request to main and every push to main:
+#   - checks: npm ci, then typecheck / lint / test, each only if package.json defines that script
+#   - secret-scan: gitleaks over the commits of the PR (or the push), with .gitleaks.toml when present
+#   - ci-passed: one stable check name to mark as required in branch protection
+# No secrets are used. Actions are pinned to full commit SHAs.
+name: CI (project kit, node)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kit-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+  GITLEAKS_VERSION: '8.30.1'
+  GITLEAKS_SHA256: '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb'
+
+jobs:
+  checks:
+    name: Typecheck, lint, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck --if-present
+      - name: Lint
+        run: npm run lint --if-present
+      - name: Test
+        run: npm test --if-present
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install pinned gitleaks
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/gl.tgz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gl.tgz" | sha256sum -c -
+          mkdir "$RUNNER_TEMP/gl" && tar -xzf "$RUNNER_TEMP/gl.tgz" -C "$RUNNER_TEMP/gl" gitleaks
+      # Every commit of the PR (or push) is scanned, so a secret added and removed again inside the PR still
+      # fails the run. Older history is not scanned here: scan it once by hand when adopting the kit
+      # (gitleaks git --redact --log-opts=--all .) and rotate whatever it finds.
+      - name: Scan the new commits
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          CFG=""; [ -f .gitleaks.toml ] && CFG="--config .gitleaks.toml"
+          if [ -n "$BASE" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BASE^{commit}"; then
+            RANGE="$BASE..$HEAD"
+          else
+            RANGE="-1 $HEAD"
+          fi
+          "$RUNNER_TEMP/gl/gitleaks" git --redact --no-banner --verbose --exit-code 1 $CFG --log-opts="$RANGE" .
+
+  ci-passed:
+    name: CI passed
+    if: ${{ always() }}
+    needs: [checks, secret-scan]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail unless every job succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "job results: $RESULTS"
+          for r in $RESULTS; do
+            [ "$r" = "success" ] || { echo "a required job did not succeed"; exit 1; }
+          done

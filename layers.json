@@ -1,0 +1,45 @@
+{
+  "_comment": "The installer's table of layers. lib: paths under lib/ copied to .claude/kit/lib/. files: kit path -> repo path, created if absent, never overwritten once the repo has changed them. claudeMd: section added to the CLAUDE.md block. To add a CI stack: put its workflow in addons/ci/<stack>/ci.yml, add a 'ci-<stack>' entry here like ci-node, and (optionally) a detect rule.",
+  "layers": {
+    "core": {
+      "description": "Guardrail hooks (no sweep-staging, no merge+delete), review skills with their weekly update check, pre-commit secret scan, kit update reminder.",
+      "required": true,
+      "lib": [
+        "kit-env.mjs",
+        "session-start.mjs",
+        "update-check.mjs",
+        "review-skills-check.mjs",
+        "nudge.mjs",
+        "hooks/run.sh",
+        "bash-guard/bash-guard.mjs",
+        "bash-guard/shell.mjs",
+        "bash-guard/repo-state.mjs",
+        "bash-guard/rules/core",
+        "githooks/wiring.mjs",
+        "githooks/scan-staged.sh",
+        "githooks/install-gitleaks.sh"
+      ],
+      "claudeMd": "templates/claude-md/core.md"
+    },
+    "jobs": {
+      "description": "Job isolation: one git worktree per agent job; the main checkout stays on main and clean (hook + pre-commit check + session-start STOP notice).",
+      "lib": ["jobs/job.mjs", "bash-guard/rules/jobs", "githooks/main-dir-check.sh"],
+      "claudeMd": "templates/claude-md/jobs.md"
+    },
+    "phoenix": {
+      "description": "Phoenix Studio: pre-deploy check script and a hook that blocks the Studio deploy call until it has passed for the current commit.",
+      "lib": ["phoenix/predeploy-lib.mjs", "phoenix/predeploy-check.mjs", "bash-guard/rules/phoenix"],
+      "claudeMd": "templates/claude-md/phoenix.md"
+    },
+    "ci-node": {
+      "description": "GitHub Actions CI for Node/TypeScript: typecheck, lint, test (when package.json defines them) and a secret scan on every PR.",
+      "files": { "addons/ci/node/ci.yml": ".github/workflows/project-kit-ci-node.yml" },
+      "claudeMd": "templates/claude-md/ci.md",
+      "detect": "package.json"
+    }
+  },
+  "presets": {
+    "basic": ["core"],
+    "phoenix": ["core", "jobs", "phoenix", "ci-auto"]
+  }
+}

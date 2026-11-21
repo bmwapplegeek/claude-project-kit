@@ -1,0 +1,8 @@
+{
+  "_comment": "Where the kit's releases live; the update check reads this. Releases are git tags named <tagPrefix><semver> (v1.0.0) in gitUrl, and path is the kit folder inside that repo ('' = the repo root). If the kit moves, change this file, plus the URLs in README.md, INSTALL.md and .claude-plugin/ (the plugin test lists every file that names the home).",
+  "name": "project-kit",
+  "gitUrl": "https://github.com/bmwapplegeek/claude-project-kit.git",
+  "repo": "bmwapplegeek/claude-project-kit",
+  "path": "",
+  "tagPrefix": "v"
+}
