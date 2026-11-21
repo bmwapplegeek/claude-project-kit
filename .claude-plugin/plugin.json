@@ -1,7 +1,7 @@
 {
   "name": "guardrails",
   "displayName": "Project kit guardrails",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Mechanical guardrails for every repo on this machine: blocks sweep-staging (git add -A, commit -a) and merge-plus-branch-delete in one command, adds the pinned code-review and differential-review skills, and flags kit and skill updates without applying them.",
   "author": { "name": "project-kit authors" },
   "repository": "https://github.com/bmwapplegeek/claude-project-kit",

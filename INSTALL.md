@@ -6,7 +6,18 @@ that fails: stop and tell the owner what it printed.
 1. **Look first.** If the repository already has its own hooks for the same things (a PreToolUse Bash guard in
    `.claude/settings.json`, a gitleaks pre-commit hook, vendored review skills), stop and ask the owner which to
    keep. Two copies of the same guardrail fire twice.
-2. **Branch.** Work on a new branch (or your own job worktree), never directly on `main`.
+2. **Worktree.** Do the install in a separate git worktree on a new branch, not in the main checkout. If you
+   already work in your own job worktree, use that. Otherwise, from the repository root:
+
+   ```bash
+   git fetch origin
+   git worktree add ../worktrees/chore-project-kit -b chore/project-kit origin/main
+   cd ../worktrees/chore-project-kit
+   ```
+
+   (Use the repository's base branch if it is not `main`.) Why: the `jobs` layer, part of `--preset phoenix`,
+   blocks commits on any branch in the main checkout as soon as it is installed, so the install commit in
+   step 7 would be refused there. After the pull request is merged: `git worktree remove ../worktrees/chore-project-kit`.
 3. **Get a release.** Find the newest tag and clone it outside the repository:
 
    ```bash
@@ -20,7 +31,7 @@ that fails: stop and tell the owner what it printed.
      (core + job worktrees + pre-deploy gate + a CI workflow when the stack has a template).
    - Anything else: `--preset basic` (core only). Add layers with `--with`, for example
      `--with core,jobs,ci-node`. `node /tmp/project-kit-vX.Y.Z/install.mjs --list-layers` lists them.
-5. **Dry run, then install**, from the repository root:
+5. **Dry run, then install**, from the root of the worktree from step 2:
 
    ```bash
    node /tmp/project-kit-vX.Y.Z/install.mjs --target . --preset <preset> --dry-run

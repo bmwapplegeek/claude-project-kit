@@ -25,7 +25,7 @@ Tell the repo's agent: **"Install the project kit from https://github.com/bmwapp
 [INSTALL.md](INSTALL.md) is the step-by-step an agent follows. By hand:
 
 ```bash
-git clone --depth 1 --branch v1.0.0 https://github.com/bmwapplegeek/claude-project-kit.git /tmp/project-kit
+git clone --depth 1 --branch v1.0.1 https://github.com/bmwapplegeek/claude-project-kit.git /tmp/project-kit
 node /tmp/project-kit/install.mjs --target /path/to/repo --preset basic      # or --preset phoenix, or --with core,jobs,ci-node
 ```
 
@@ -43,11 +43,11 @@ Options: `--dry-run`, `--no-download` (skip fetching the scanner), `--force`, `-
 ### Install the plugin (once per machine)
 
 ```bash
-claude plugin marketplace add bmwapplegeek/claude-project-kit@v1.0.0
+claude plugin marketplace add bmwapplegeek/claude-project-kit@v1.0.1
 claude plugin install guardrails@project-kit
 ```
 
-or in a session: `/plugin marketplace add bmwapplegeek/claude-project-kit@v1.0.0`, then
+or in a session: `/plugin marketplace add bmwapplegeek/claude-project-kit@v1.0.1`, then
 `/plugin install guardrails@project-kit`. The terminal, the desktop app and the VS Code and JetBrains extensions
 read the same `~/.claude` settings, so one install covers all of them on that machine. Leave the marketplace's
 auto-update off (the default for third-party marketplaces): updates are meant to be read before they are taken.

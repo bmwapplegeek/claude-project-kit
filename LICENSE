@@ -19,8 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-The files under skills/code-review/upstream/ (Apache-2.0) and
-skills/differential-review/upstream/ (CC BY-SA 4.0), and the wrapper
-skills/differential-review/SKILL.md (CC BY-SA 4.0), are not covered by this
-licence; see README.md, "Licences".
